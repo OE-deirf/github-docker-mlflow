@@ -1,0 +1,57 @@
+# Three steps DAG:  prepare -> train -> evaluate
+#
+#   dvc dag                 # graph
+#   dvc repro               # just the invalidated steps are running
+#   dvc metrics diff HEAD~1
+#
+# IMPORTANT: in every steps need to add the OWN soource as well
+# If them are missing, DVC always says that evething up-to-date
+
+stages:
+  prepare:
+    cmd: python -m src.churn.prepare
+    deps:
+      - src/churn/prepare.py
+      - src/churn/config.py
+      - data/raw/churn.csv
+    params:
+      - seed
+      - prepare.test_size
+      - prepare.target
+      - prepare.drop_columns
+      - prepare.stratify
+    outs:
+      - data/processed/train.csv
+      - data/processed/valid.csv
+
+  train:
+    cmd: python -m src.churn.train
+    deps:
+      - src/churn/train.py
+      - src/churn/config.py
+      - data/processed/train.csv
+    params:
+      - seed
+      - prepare.target
+      - train.model
+      - train.n_estimators
+      - train.max_depth
+      - train.min_samples_leaf
+      - train.class_weight
+    outs:
+      - models/model.joblib
+
+  evaluate:
+    cmd: python -m src.churn.evaluate
+    deps:
+      - src/churn/evaluate.py
+      - src/churn/config.py
+      - models/model.joblib
+      - data/processed/valid.csv
+    params:
+      - prepare.target
+      - evaluate.threshold
+      - evaluate.min_f1
+    metrics:
+      - metrics/metrics.json:
+          cache: false      # small JSON -> goes to GIT

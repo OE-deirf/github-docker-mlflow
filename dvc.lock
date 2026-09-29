@@ -1,0 +1,92 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m src.churn.prepare
+    deps:
+    - path: data/raw/churn.csv
+      hash: md5
+      md5: 597a8747669b4c741d097d119b8971a1
+      size: 431234
+    - path: src/churn/config.py
+      hash: md5
+      md5: f51cdf0fc75daa3298f48bdfc5e4fc31
+      size: 2213
+    - path: src/churn/prepare.py
+      hash: md5
+      md5: 92521a65c1d43af9538db8e285445d4c
+      size: 2376
+    params:
+      params.yaml:
+        prepare.drop_columns:
+        - Area Code
+        prepare.stratify: true
+        prepare.target: Churn
+        prepare.test_size: 0.2
+        seed: 42
+    outs:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: bc75cada1470c172c9ffb6f227748d45
+      size: 224293
+    - path: data/processed/valid.csv
+      hash: md5
+      md5: 8e9cccec10bed2eb93e24f0a661a65b1
+      size: 56283
+  train:
+    cmd: python -m src.churn.train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: bc75cada1470c172c9ffb6f227748d45
+      size: 224293
+    - path: src/churn/config.py
+      hash: md5
+      md5: f51cdf0fc75daa3298f48bdfc5e4fc31
+      size: 2213
+    - path: src/churn/train.py
+      hash: md5
+      md5: a91c105413e012137d2d194254d28d0f
+      size: 3697
+    params:
+      params.yaml:
+        prepare.target: Churn
+        seed: 42
+        train.class_weight: balanced
+        train.max_depth: 8
+        train.min_samples_leaf: 2
+        train.model: random_forest
+        train.n_estimators: 200
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: 209238992283929bee7a4a48cca06e0f
+      size: 2105547
+  evaluate:
+    cmd: python -m src.churn.evaluate
+    deps:
+    - path: data/processed/valid.csv
+      hash: md5
+      md5: 8e9cccec10bed2eb93e24f0a661a65b1
+      size: 56283
+    - path: models/model.joblib
+      hash: md5
+      md5: 209238992283929bee7a4a48cca06e0f
+      size: 2105547
+    - path: src/churn/config.py
+      hash: md5
+      md5: f51cdf0fc75daa3298f48bdfc5e4fc31
+      size: 2213
+    - path: src/churn/evaluate.py
+      hash: md5
+      md5: 6291f02e0e9780a09633a53cf1e3e9f5
+      size: 1888
+    params:
+      params.yaml:
+        evaluate.min_f1: 0.6
+        evaluate.threshold: 0.5
+        prepare.target: Churn
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 8f1b56739f6395345777b2bfbb641098
+      size: 149
