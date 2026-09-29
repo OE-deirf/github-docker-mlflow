@@ -1,0 +1,48 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "workbench.colorTheme": "Dark Modern",
+    "editor.semanticHighlighting.enabled": true,
+    "editor.semanticTokenColorCustomizations": {
+        "[Dark Modern]": {
+            "enabled": true,
+            "rules": {
+                "class": "#4EC9B0",
+                "class.defaultLibrary": "#4EC9B0",
+                "enum": "#4EC9B0",
+                "type": "#4EC9B0",
+                "typeParameter": {
+                    "foreground": "#4EC9B0",
+                    "italic": true
+                },
+                "namespace": "#4EC9B0",
+                "function": "#DCDCAA",
+                "function.defaultLibrary": {
+                    "foreground": "#DCDCAA",
+                    "italic": true
+                },
+                "method": "#DCDCAA",
+                "magicFunction": {
+                    "foreground": "#DCDCAA",
+                    "italic": true
+                },
+                "decorator": "#DCDCAA",
+                "parameter": "#9CDCFE",
+                "variable": "#9CDCFE",
+                "variable.readonly": "#4FC1FF",
+                "property": "#9CDCFE",
+                "enumMember": "#4FC1FF",
+                "builtinConstant": "#569CD6",
+                "selfParameter": {
+                    "foreground": "#569CD6",
+                    "italic": true
+                },
+                "clsParameter": {
+                    "foreground": "#569CD6",
+                    "italic": true
+                },
+                "module": "#4EC9B0"
+            }
+        }
+    },
+    "python-envs.defaultEnvManager": "ms-python.python:venv"
+}
