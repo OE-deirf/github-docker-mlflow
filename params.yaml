@@ -1,0 +1,19 @@
+seed: 42
+
+prepare:
+  test_size: 0.2
+  target: Churn
+  drop_columns:
+    - Area Code
+  stratify: true
+
+train:
+  model: random_forest   # random_forest | logistic_regression
+  n_estimators: 200
+  max_depth: 8
+  min_samples_leaf: 2
+  class_weight: balanced
+
+evaluate:
+  threshold: 0.5
+  min_f1: 0.60
