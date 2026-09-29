@@ -1,0 +1,8 @@
+pandas==2.3.3
+numpy==2.2.6
+scikit-learn==1.7.2
+joblib==1.6.0
+
+# DVC + S3 (MinIO) tamogatas
+dvc==3.67.1
+dvc-s3==3.3.0

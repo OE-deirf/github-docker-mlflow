@@ -1,2 +1,23 @@
 pytest == 8.4.2
 coverage == 7.16.0
+
+pandas==2.3.3
+numpy==2.2.6
+scikit-learn==1.7.2
+joblib==1.6.0
+
+pydantic==2.13.5
+pydantic-settings==2.15.0
+flake8==7.4.1
+
+pylint==3.3.1
+pyyaml==6.0.3
+python-dotenv==1.2.3
+
+# DVC + S3 (MinIO) tamogatas
+dvc==3.67.1
+dvc-s3==3.3.0
+
+# Fejlesztoi eszkozok
+pre-commit==4.6.2
+nbstripout==0.9.1
