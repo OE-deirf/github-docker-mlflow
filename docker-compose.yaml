@@ -7,6 +7,12 @@
 #     Between the containers are using the compose service name: http://minio:9000
 #     Never use 127.0.0.1 between containers.
 
+# reset containers
+# docker compose run --rm dvc-cleanup
+# docker compose down -v --remove-orphans
+# docker image rm mlops:local
+
+
 x-minio-env: &minio-env
   MINIO_ROOT_USER: ${MINIO_ROOT_USER}
   MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -44,7 +50,7 @@ services:
       context: .
       dockerfile: src/docker/dvc_dockerfile
       network: host
-    image: mlops-dvc:local
+    image: mlops:local
     pull_policy: never
     depends_on: [minio]
     environment: *minio-env
@@ -52,7 +58,7 @@ services:
 
   # Once set dvc remote config and exit
   set-dvc-remote:
-    image: mlops-dvc:local
+    image: mlops:local
     pull_policy: never
     depends_on:
       create-bucket:
@@ -71,6 +77,19 @@ services:
         dvc remote modify --local "$$DVC_REMOTE" secret_access_key $${MINIO_ROOT_PASSWORD};
         dvc remote list --local
     restart: "no"
+
+  dvc-cleanup:
+    image: mlops:local
+    pull_policy: never
+    profiles: ["cleanup"]
+    environment:
+      <<: *minio-env
+      HOME: /tmp
+    volumes: [".:/workspace"]
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - dvc remote remove --local "$$DVC_REMOTE" || true
 
 volumes:
   minio-data:
