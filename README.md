@@ -71,3 +71,45 @@ Simple Machine Learning demo using docker in github + MLFlow
 
 # dvc system status
 - dvc doctor
+
+# docker build
+- docker build --network=host -t <image_name>:<tag> .
+# docker run
+- docker run -d --rm --name <name>
+- docker run --name <name> <image_name>:<tag>
+# check logs
+- docker logs -f <container_id>
+
+# compose.yaml example
+services:
+  api:
+    build:
+      context: ./api           # build context
+      dockerfile: Dockerfile   # based on the context
+      target: production       # stage in case of multi-stage build
+      args:
+        PYTHON_VERSION: "3.12" # Dockerfile ARGs
+    image: myorg/api:latest    # builded image name (optional)
+    ports:
+      - "8000:8000"
+
+  db:
+    image: postgres:16         # not build just pull
+
+# docker compose
+- docker compose config
+- docker compose build                          # every buildable service
+- docker compose build <service_name>           # only one service
+- docker compose build --no-cache               # without cache, full rebuild
+- docker compose build --pull                   # pull the FROM base image
+- docker compose up --build                     # build, and run
+- docker compose up -d --build <service_name>   # only one service rebuild and restart
+- docker compose down -v --remove-orphans       # remove all containers and data
+
+# docker container
+- docker container list -a
+- docker container rm <container id>..
+
+# docker image
+- docker image list -a
+- docker image rm <image name>..
