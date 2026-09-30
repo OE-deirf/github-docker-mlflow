@@ -4,7 +4,7 @@
 #   dvc repro               # just the invalidated steps are running
 #   dvc metrics diff HEAD~1
 #
-# IMPORTANT: in every steps need to add the OWN soource as well
+# IMPORTANT: in every steps need to add the OWN source as well
 # If them are missing, DVC always says that evething up-to-date
 
 stages:

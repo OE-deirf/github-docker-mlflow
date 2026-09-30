@@ -7,6 +7,16 @@
 #     Between the containers are using the compose service name: http://minio:9000
 #     Never use 127.0.0.1 between containers.
 
+x-minio-env: &minio-env
+  MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+  MINIO_ENDPOINT: http://minio:9000
+  MINIO_ENDPOINT_HOST: http://localhost:9000
+  DVC_BUCKET: ${DVC_BUCKET:-dvc}
+  DVC_REMOTE: ${DVC_REMOTE:-storage}
+  NO_PROXY: minio,localhost
+  PYTHONUNBUFFERED: "1"
+
 services:
   minio:
     image: coollabsio/minio:latest
@@ -15,13 +25,13 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -32,14 +42,34 @@ services:
   create-bucket:
     build:
       context: .
-      dockerfile: src/docker/Dockerfile
+      dockerfile: src/docker/dvc_dockerfile
       network: host
+    image: mlops-dvc:local
+    pull_policy: never
     depends_on: [minio]
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      DVC_BUCKET: ${DVC_BUCKET}
-      PYTHONUNBUFFERED: "1"
+    environment: *minio-env
+    restart: "no"
+
+  # Once set dvc remote config and exit
+  set-dvc-remote:
+    image: mlops-dvc:local
+    pull_policy: never
+    depends_on:
+      create-bucket:
+        condition: service_completed_successfully
+    environment: *minio-env
+    volumes: [".:/workspace"]
+    working_dir: /workspace
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        dvc remote add --local -d -f "$$DVC_REMOTE" "s3://$$DVC_BUCKET"
+        # dvc remote modify --local "$$DVC_REMOTE" endpointurl "$$MINIO_ENDPOINT"
+        dvc remote modify --local "$$DVC_REMOTE" endpointurl "$$MINIO_ENDPOINT_HOST"
+        dvc remote modify --local "$$DVC_REMOTE" access_key_id $${MINIO_ROOT_USER};
+        dvc remote modify --local "$$DVC_REMOTE" secret_access_key $${MINIO_ROOT_PASSWORD};
+        dvc remote list --local
     restart: "no"
 
 volumes:

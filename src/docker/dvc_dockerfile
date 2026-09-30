@@ -1,0 +1,6 @@
+FROM python:3.12-slim
+
+COPY ./requirements.txt .
+RUN pip install -v --no-cache-dir -r requirements.txt
+COPY src/docker/init_dvc_bucket.py /init_dvc_bucket.py
+CMD ["python", "/init_dvc_bucket.py"]
