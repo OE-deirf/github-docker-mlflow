@@ -1,4 +1,4 @@
-name: Test + Docker build and push (GHCR)
+name: Churn ML project (GHCR)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}   # etc. user/demo2-fizzbuzz-docker
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   test:
