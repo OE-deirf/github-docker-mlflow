@@ -1,3 +1,7 @@
+#   PostgreSQL   -> backend store (futasok, parameterek, metrikak, registry)
+#   MinIO        -> artifact store (modellek, abrak) S3-kompatibilisen
+#   MLflow       -> tracking server, proxyzott artefaktum-eleressel
+
 # Start:  cp .env.example .env  &&  docker compose up -d
 # Konzol: http://localhost:9001   S3 API: http://localhost:9000
 # Stop:   docker compose down          (data remain)
@@ -5,6 +9,8 @@
 #
 # NETWORK:
 #     Between the containers are using the compose service name: http://minio:9000
+#           (postgres:5432, minio:9000, mlflow:5000)
+#     From host: published port (localhost:5500, localhost:9000)
 #     Never use 127.0.0.1 between containers.
 
 # reset containers
@@ -12,8 +18,7 @@
 # docker compose down -v --remove-orphans
 # docker image rm mlops:local
 
-
-x-minio-env: &minio-env
+x-env: &x-env
   MINIO_ROOT_USER: ${MINIO_ROOT_USER}
   MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
   MINIO_ENDPOINT: http://minio:9000
@@ -21,18 +26,34 @@ x-minio-env: &minio-env
   DVC_BUCKET: ${DVC_BUCKET:-dvc}
   DVC_REMOTE: ${DVC_REMOTE:-storage}
   NO_PROXY: minio,localhost
+  MLFLOW_BUCKET: ${MLFLOW_BUCKET:-mlflow}
+  MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB:-mlflow}
   PYTHONUNBUFFERED: "1"
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mlflow-postgres
+    environment: *x-env
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   minio:
     image: coollabsio/minio:latest
     container_name: minio
     ports:
       - "9000:9000"
       - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    environment: *x-env
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
@@ -53,7 +74,7 @@ services:
     image: mlops:local
     pull_policy: never
     depends_on: [minio]
-    environment: *minio-env
+    environment: *x-env
     restart: "no"
 
   # Once set dvc remote config and exit
@@ -63,7 +84,7 @@ services:
     depends_on:
       create-bucket:
         condition: service_completed_successfully
-    environment: *minio-env
+    environment: *x-env
     volumes: [".:/workspace"]
     working_dir: /workspace
     entrypoint: ["/bin/bash", "-c"]
@@ -83,7 +104,7 @@ services:
     pull_policy: never
     profiles: ["cleanup"]
     environment:
-      <<: *minio-env
+      <<: *x-env
       HOME: /tmp
     volumes: [".:/workspace"]
     working_dir: /workspace
@@ -91,5 +112,34 @@ services:
     command:
       - dvc remote remove --local "$$DVC_REMOTE" || true
 
+  mlflow:
+    build:
+      network: host
+      dockerfile: ./src/docker/mlflow_dockerfile
+    container_name: mlflow-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment: *x-env
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mlflow}
+      --artifacts-destination s3://${MLFLOW_BUCKET}
+      --serve-artifacts
+    ports:
+      - "${MLFLOW_PORT:-5500}:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
 volumes:
   minio-data:
+  pg-data:

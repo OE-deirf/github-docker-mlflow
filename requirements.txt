@@ -3,8 +3,9 @@ numpy==2.2.6
 scikit-learn==1.7.2
 joblib==1.6.0
 pyyaml==6.0.3
-boto3==1.43.75
+mlflow==3.1.0
 
 # DVC + S3 (MinIO) tamogatas
 dvc==3.67.1
 dvc-s3==3.3.0
+boto3==1.43.75

@@ -1,0 +1,12 @@
+# MLflow tracking server, PostgreSQL + S3 (MinIO) tamogatassal.
+#
+# Please check the version at: https://github.com/mlflow/mlflow/releases
+FROM ghcr.io/mlflow/mlflow:v3.16.1
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir psycopg2-binary==2.9.10 boto3==1.35.36
+
+EXPOSE 5000
