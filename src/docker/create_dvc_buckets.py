@@ -1,6 +1,7 @@
 import os
 import time
 import boto3
+from pathlib import Path
 from typing import Any
 from botocore.client import Config
 from botocore.exceptions import ClientError, EndpointConnectionError
@@ -8,11 +9,12 @@ from botocore.exceptions import ClientError, EndpointConnectionError
 
 class MinIO:
     def access_to_s3(self) -> Any:
+        password: str = Path("/run/secrets/minio_root_password").read_text().strip()
         s3: Any = boto3.client(
             "s3",
             endpoint_url="http://minio:9000",
             aws_access_key_id=os.environ["MINIO_ROOT_USER"],
-            aws_secret_access_key=os.environ["MINIO_ROOT_PASSWORD"],
+            aws_secret_access_key=password,
             region_name="us-east-1",
             config=Config(s3={"addressing_style": "path"}),
         )

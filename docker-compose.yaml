@@ -20,7 +20,6 @@
 
 x-env: &x-env
   MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
   MINIO_ENDPOINT: http://minio:9000
   MINIO_ENDPOINT_HOST: http://localhost:9000
   DVC_BUCKET: ${DVC_BUCKET:-dvc}
@@ -32,6 +31,12 @@ x-env: &x-env
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
   POSTGRES_DB: ${POSTGRES_DB:-mlflow}
   PYTHONUNBUFFERED: "1"
+
+secrets:
+  minio_root_password:
+    file: ./secrets/minio_root_password.txt
+  postgres_admin_password:
+    file: ./secrets/postgres_admin_password.txt
 
 services:
   postgres:
@@ -53,7 +58,11 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
-    environment: *x-env
+    environment:
+      <<: *x-env
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/minio_root_password
+    secrets:
+      - minio_root_password
     volumes:
       - minio-data:/data
     command: server /data --console-address ":9001"
@@ -66,11 +75,13 @@ services:
     restart: unless-stopped
 
   # Once init-container: create DVC store and exit
-  create-bucket:
+  create-buckets:
     build:
       context: .
       dockerfile: src/docker/dvc_dockerfile
       network: host
+    secrets:
+      - minio_root_password
     image: mlops:local
     pull_policy: never
     depends_on: [minio]
@@ -82,15 +93,19 @@ services:
     image: mlops:local
     pull_policy: never
     depends_on:
-      create-bucket:
+      create-buckets:
         condition: service_completed_successfully
-    environment: *x-env
+    environment:
+      <<: *x-env
+    secrets:
+      - minio_root_password
     volumes: [".:/workspace"]
     working_dir: /workspace
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
         set -e
+        export MINIO_ROOT_PASSWORD="$$(cat /run/secrets/minio_root_password)"
         dvc remote add --local -d -f "$$DVC_REMOTE" "s3://$$DVC_BUCKET"
         # dvc remote modify --local "$$DVC_REMOTE" endpointurl "$$MINIO_ENDPOINT"
         dvc remote modify --local "$$DVC_REMOTE" endpointurl "$$MINIO_ENDPOINT_HOST"
@@ -116,6 +131,8 @@ services:
     build:
       network: host
       dockerfile: ./src/docker/mlflow_dockerfile
+    secrets:
+      - postgres_admin_password
     container_name: mlflow-server
     depends_on:
       postgres:

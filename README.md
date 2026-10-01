@@ -105,6 +105,8 @@ services:
 - docker compose up --build                     # build, and run
 - docker compose up -d --build <service_name>   # only one service rebuild and restart
 - docker compose down -v --remove-orphans       # remove all containers and data
+- docker compose exec <service_name> ls -l /run/secrets/
+- docker compose ps --services
 
 # docker container
 - docker container list -a
