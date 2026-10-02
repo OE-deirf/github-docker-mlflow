@@ -1,6 +1,6 @@
 """DVC stage 1 -- prepare: load raw CSV, clean, split into train/valid.
 
-Run:  python -m churn.prepare      (or: dvc repro prepare)
+Run:  python -m src.churn.prepare      (or: dvc repro prepare)
 """
 
 from __future__ import annotations

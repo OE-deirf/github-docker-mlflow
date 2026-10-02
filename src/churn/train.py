@@ -4,7 +4,7 @@ The preprocessing lives INSIDE the Pipeline on purpose: that is what removes the
 training/serving skew class of bugs (week 5-6). Never ship separate scaler.pkl /
 encoder.pkl files -- see the anti-pattern in context/MLSecOps/Gyakorlat/.
 
-Run:  python -m churn.train      (or: dvc repro train)
+Run:  python -m src.churn.train      (or: dvc repro train)
 """
 
 from __future__ import annotations

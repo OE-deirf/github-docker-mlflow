@@ -3,7 +3,7 @@
 Writes metrics/metrics.json, which is declared as `metrics` in dvc.yaml with
 `cache: false` -- so it goes into Git and `dvc metrics diff` can compare commits.
 
-Run:  python -m churn.evaluate      (or: dvc repro evaluate)
+Run:  python -m src.churn.evaluate      (or: dvc repro evaluate)
 """
 
 from __future__ import annotations
