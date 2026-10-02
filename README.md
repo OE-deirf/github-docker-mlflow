@@ -4,11 +4,11 @@ Simple Machine Learning demo using docker in github + MLFlow
 # venv
 - python3.10 -m venv .venv
 - source .venv/bin/activate
-- pip install -v -r requirements.txt
+- pip install -v -r requirements.txt/requirements_dev.txt
 
 - uv venv --python 3.10
 - source .venv/bin/activate
-- uv pip install -r requirements.tx
+- uv pip install -r requirements.txt/requirements_dev.txt
 
 # DVC, GIT  init
 - git init
@@ -114,13 +114,13 @@ services:
 - docker compose up --build                     # build, and run
 - docker compose up -d --build <service_name>   # only one service rebuild and restart
 - docker compose down -v --remove-orphans       # remove all containers and data
-- docker compose exec <service_name> ls -l /run/secrets/
-- docker compose ps --services
+- docker compose exec <service_name> bash       # run a service with bash command
+- docker compose ps --services                  # prit all running containers
 
 # docker container
-- docker container list -a
-- docker container rm <container id>..
+- docker container list -a                       # list all containers
+- docker container rm <container id>..           # delete a container
 
 # docker image
-- docker image list -a
-- docker image rm <image name>..
+- docker image list -a                           # list all images
+- docker image rm <image name>..                 # delete an image
